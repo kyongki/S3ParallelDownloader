@@ -33,7 +33,7 @@ Total File numbers: 1545
 ended
 ```
 
-With 10001 files, it  took 48 sec.
+With 10001 files, it  took 42 sec.
 ```
 Duration: 0:00:42.204100
 Total File numbers: 10001
