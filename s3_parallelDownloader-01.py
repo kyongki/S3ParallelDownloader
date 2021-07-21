@@ -1,7 +1,11 @@
 #!/bin/env python3
-
-#ChangeLogs
-## 2021.07.20: first created
+'''
+** Chaveat: not suitable for millions of files, it shows slow performance to get object list
+ChangeLogs
+- 2021.07.21: modified getObject function
+  - used bucket.all instead of paginator
+- 2021.07.20: first created
+'''
 
 #requirement
 ## python 3.3+
@@ -24,7 +28,10 @@ debug_en = True
 # end of variables ## you don't need to modify below codes.
 
 # S3 session
-s3_client = boto3.client('s3', region)
+s3 = boto3.resource('s3')
+#s3_client = boto3.client('s3', region)
+bucket = s3.Bucket(bucket_name)
+######
 
 # dividing folders by max concurrent processes
 def divide_dirs_list(input_list, max_process):
@@ -34,24 +41,20 @@ def divide_dirs_list(input_list, max_process):
 # download function
 def downfiles(bucket_name, src_obj, dest_path):
     try:
-        s3_client.download_file(bucket_name, src_obj, dest_path)
+        bucket.download_file(bucket_name, src_obj, dest_path)
         if debug_en:
             print("[dubug] downloading object: %s to %s" %(src_obj, dest_path))
     except:
         pass
 
 def download_dir(bucket_name, sub_prefix):
-    paginator = s3_client.get_paginator('list_objects_v2')
-    pages = paginator.paginate(Bucket=bucket_name, Prefix=sub_prefix)
     pool = Pool(max_process)
     mp_data = []
-    for page in pages:
-        if 'Contents' in page:
-            for obj in page['Contents']:
-                src_obj = obj['Key']
-                dest_path = local_dir + src_obj
-                mp_data.append((bucket_name, src_obj, dest_path))
-                os.path.dirname(dest_path) and os.makedirs(os.path.dirname(dest_path), exist_ok=True) 
+    for obj in bucket.objects.filter(Prefix=sub_prefix):
+        src_obj = obj.key
+        dest_path = local_dir + src_obj
+        mp_data.append((bucket_name, src_obj, dest_path))
+        os.path.dirname(dest_path) and os.makedirs(os.path.dirname(dest_path), exist_ok=True) 
     pool.starmap(downfiles, mp_data)
     return len(mp_data)
 

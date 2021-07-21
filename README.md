@@ -1,5 +1,6 @@
 # S3Parallel Downloader
-s3_parallelDownloader.py is developed to increase the download speed of S3 objects by direcotry
+s3_parallelDownloader.py is developed to increase the download speed of S3 objects by direcotry.
+** it shows slow performance for millions files. However, for <10,000 files, fast enough.
 
 ## How to Use It
 ### requirement
