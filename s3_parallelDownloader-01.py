@@ -39,21 +39,21 @@ def divide_dirs_list(input_list, max_process):
     return (input_list[i:i+n] for i in range(0, len(input_list), n))
 
 # download function
-def downfiles(bucket_name, src_obj, dest_path):
+def downfiles(src_obj, dest_path):
     try:
-        bucket.download_file(bucket_name, src_obj, dest_path)
+        bucket.download_file(src_obj, dest_path)
         if debug_en:
             print("[dubug] downloading object: %s to %s" %(src_obj, dest_path))
     except:
         pass
 
-def download_dir(bucket_name, sub_prefix):
+def download_dir(sub_prefix):
     pool = Pool(max_process)
     mp_data = []
     for obj in bucket.objects.filter(Prefix=sub_prefix):
         src_obj = obj.key
         dest_path = local_dir + src_obj
-        mp_data.append((bucket_name, src_obj, dest_path))
+        mp_data.append((src_obj, dest_path))
         os.path.dirname(dest_path) and os.makedirs(os.path.dirname(dest_path), exist_ok=True) 
     pool.starmap(downfiles, mp_data)
     return len(mp_data)
@@ -66,7 +66,7 @@ if __name__ == '__main__':
     for s3_dir in s3_dirs:
         # multiprocessing tasks
         print("[Information] %s directory is downloading" % s3_dir)
-        no_files = download_dir(bucket_name, s3_dir)
+        no_files = download_dir(s3_dir)
         total_files = total_files + no_files
 
     end_time = datetime.now()
