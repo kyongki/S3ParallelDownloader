@@ -54,8 +54,8 @@ def get_objs(sub_prefix, q):
         num_obj+=1
         q.put(mp_data)
     #print('all object list ingested')
+    q.put(quit_flag)
     return num_obj
-    #q.put(quit_flag)
 
 def download_files(bucket, q):
     while True:
