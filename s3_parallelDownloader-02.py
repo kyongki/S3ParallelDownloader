@@ -1,4 +1,17 @@
 #!/bin/env python3
+'''
+** Chaveat: not suitable for millions of files, it shows slow performance to get object list
+ChangeLogs
+- 2021.07.23: applying multiprocessing.queue + process instead of pool
+- 2021.07.21: modified getObject function
+  - for parallel processing, multiprocessing.Pool used
+  - used bucket.all instead of paginator
+- 2021.07.20: first created
+'''
+
+#requirement
+## python 3.4+
+## boto3
 
 import os
 import boto3

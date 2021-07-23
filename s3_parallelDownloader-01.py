@@ -3,6 +3,7 @@
 ** Chaveat: not suitable for millions of files, it shows slow performance to get object list
 ChangeLogs
 - 2021.07.21: modified getObject function
+  - for parallel processing, multiprocessing.Pool used
   - used bucket.all instead of paginator
 - 2021.07.20: first created
 '''
