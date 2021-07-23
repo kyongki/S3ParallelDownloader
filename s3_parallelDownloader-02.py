@@ -26,7 +26,7 @@ prefix = 'data1/'
 input_list= [prefix+'dir1/', prefix+'dir2/', prefix+'dir3/']
 local_dir = '/download/here/'
 max_process = 512
-endpoint='s3.'+region+'awsamazon.com'
+endpoint='https://s3.'+region+'awsamazon.com'
 debug_en = False
 # end of variables ## you don't need to modify below codes.
 quit_flag = 'DONE'
