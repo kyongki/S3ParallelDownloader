@@ -2,6 +2,8 @@
 '''
 ** Chaveat: not suitable for millions of files, it shows slow performance to get object list
 ChangeLogs
+- 2021.08.03:
+  - supporting multiprocessing(spawn) 
 - 2021.08.02:
   - adding logger
   - fixing error on python3.8, multiprocessing.set_start_method("fork")
@@ -18,6 +20,7 @@ ChangeLogs
 #requirement
 ## python 3.4+
 ## boto3
+## preferred os: linux (mac, windows works as well, but performance is slower)
 
 import os
 import boto3
@@ -40,17 +43,14 @@ endpoint='https://s3.'+region+'.amazonaws.com'
 log_level = logging.INFO ## DEBUG, INFO, WARNING, ERROR
 # CMD variables
 cmd='upload_dir' ## supported_cmd: 'download|del_obj_version|restore_obj_version'
-#cmd='del_obj_version' ## supported_cmd: 'download|del_obj_version|restore_obj_version'
-#restore_deleted_time = datetime(2019, 10, 22, 20, 0, 0, tzinfo=timezone.utc)
 # end of variables ## you don't need to modify below codes.
 
 errorlog_file = 'error.log'
 successlog_file = 'success.log'
 quit_flag = 'DONE'
-multiprocessing.set_start_method("fork")
+#multiprocessing.set_start_method("fork")
 
 # S3 session
-#s3 = boto3.client('s3', region)
 #s3_client = boto3.client('s3')
 s3 = boto3.resource('s3',endpoint_url=endpoint, region_name=region)
 bucket = s3.Bucket(bucket_name)
@@ -74,7 +74,7 @@ success_l = logging.getLogger('success')
 def run_multip(max_process, exec_func, q):
     p_list = []
     for i in range(max_process):
-        p = multiprocessing.Process(target = exec_func, args=(bucket, q,))
+        p = multiprocessing.Process(target = exec_func, args=(q,))
         p_list.append(p)
         p.daemon = True
         p.start()
@@ -94,7 +94,7 @@ def upload_get_files(sub_prefix, q):
         for file in f:
             file_name = os.path.join(r,file)
             obj_name = file_name.replace(sub_prefix,'',1)
-            mp_data = (file_name, obj_name)
+            mp_data = tuple([file_name, obj_name])
             success_l.debug('get_file mp_data: %s', mp_data)
             try:
                 q.put(mp_data)
@@ -108,7 +108,7 @@ def upload_get_files(sub_prefix, q):
     #q.join_thread()
     return num_obj
 
-def upload_file(bucket, q):
+def upload_file(q):
     while True:
         mp_data = q.get()
         if mp_data == quit_flag:
@@ -117,7 +117,7 @@ def upload_file(bucket, q):
         obj_name = mp_data[1] # versionid
         try:
             response = bucket.upload_file(file_name, obj_name)
-            success_l.debug('%s is uploaded' % file_name)
+            success_l.info('%s is uploaded' % file_name)
 
         except ClientError as e:
             error_l.debug('%s is failed' % file_name)
