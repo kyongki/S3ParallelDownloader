@@ -5,6 +5,7 @@ ChangeLogs
 - 2021.08.02:
   - adding logger
   - fixing error on python3.8, multiprocessing.set_start_method("fork")
+    - https://github.com/pytest-dev/pytest-flask/issues/104
 - 2021.08.01: adding uploader feature
 - 2021.07.24: 
 - 2021.07.23: applying multiprocessing.queue + process instead of pool
