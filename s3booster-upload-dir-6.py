@@ -37,7 +37,7 @@ import time
 import unicodedata
 
 #region = 'us-east-2' ## change it with your region
-prefix_list = ['/data/']
+prefix_list = ['/data1/']
 ##Common Variables
 region = 'ap-northeast-2' ## change it with your region
 bucket_name = 'your-own-bucket'
@@ -51,7 +51,8 @@ cmd='upload_dir' ## supported_cmd: 'download|del_obj_version|restore_obj_version
 errorlog_file = 'error.log'
 successlog_file = 'success.log'
 quit_flag = 'DONE'
-#multiprocessing.set_start_method("fork")
+if os.name == 'posix':
+    multiprocessing.set_start_method("fork")
 
 # S3 session
 #s3_client = boto3.client('s3')
@@ -107,7 +108,10 @@ def upload_get_files(sub_prefix, q):
             try:
                 q.put(mp_data)
             except ClientError as e:
-                error_l.info('putting queue %s is failed' % file_name)
+                error_l.info('client error: putting %s into queue %s is failed' % file_name)
+                error_l.info(e)
+            except Exception as e:
+                error_l.info('exception error: putting %s into queue %s is failed' % file_name)
                 error_l.info(e)
             num_obj+=1
             #time.sleep(0.1)
@@ -121,13 +125,17 @@ def upload_file(q):
         mp_data = q.get()
         if mp_data == quit_flag:
             break
-        file_name = mp_data[0] # keyname
-        obj_name = mp_data[1] # versionid
+        file_name = mp_data[0] # filename in local
+        obj_name = mp_data[1] # object name in S3
         try:
+            time.sleep(1)
             response = bucket.upload_file(file_name, obj_name)
             success_l.info('%s is uploaded' % file_name)
         except ClientError as e:
-            error_l.info('%s is failed' % file_name)
+            error_l.info('client error: %s is failed, obj name: %s' % (file_name, obj_name))
+            error_l.info(e)
+        except Exception as e:
+            error_l.info('exception error: %s is failed, obj name: %s' % (file_name, obj_name))
             error_l.info(e)
         #return 0 ## for the dubug, it will pause with error
 def upload_file_multi(s3_dirs):
