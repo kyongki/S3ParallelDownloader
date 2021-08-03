@@ -3,7 +3,9 @@
 ** Chaveat: not suitable for millions of files, it shows slow performance to get object list
 ChangeLogs
 - 2021.08.03:
-  - supporting multiprocessing(spawn) 
+  - support multiprocessing(spawn) 
+  - fixing windows path delimeter (\)
+  - support compatibility of file name between MAC and Windows 
 - 2021.08.02:
   - adding logger
   - fixing error on python3.8, multiprocessing.set_start_method("fork")
@@ -18,7 +20,7 @@ ChangeLogs
 '''
 
 #requirement
-## python 3.4+
+## python 3.7+ (os.name)
 ## boto3
 ## preferred os: linux (mac, windows works as well, but performance is slower)
 
@@ -32,6 +34,7 @@ from datetime import datetime, timezone
 from botocore.exceptions import ClientError
 import logging
 import time
+import unicodedata
 
 #region = 'us-east-2' ## change it with your region
 prefix_list = ['/data/']
@@ -86,14 +89,19 @@ def finishq(q, p_list):
     for pi in p_list:
         pi.join()
 
-# restore versioned objects 
+# get files to upload
 def upload_get_files(sub_prefix, q):
     num_obj=0
    # get all files from given directory
     for r,d,f in os.walk(sub_prefix):
         for file in f:
             file_name = os.path.join(r,file)
-            obj_name = file_name.replace(sub_prefix,'',1)
+            # support compatibility of MAC and windows
+            file_name = unicodedata.normalize('NFC', file_name)
+            if os.name == 'nt':
+                obj_name = file_name.replace(sub_prefix,'',1).replace('\\', '/')
+            else:
+                obj_name = file_name.replace(sub_prefix,'',1)
             mp_data = tuple([file_name, obj_name])
             success_l.debug('get_file mp_data: %s', mp_data)
             try:
@@ -118,9 +126,9 @@ def upload_file(q):
         try:
             response = bucket.upload_file(file_name, obj_name)
             success_l.info('%s is uploaded' % file_name)
-
         except ClientError as e:
-            error_l.debug('%s is failed' % file_name)
+            error_l.info('%s is failed' % file_name)
+            error_l.info(e)
         #return 0 ## for the dubug, it will pause with error
 def upload_file_multi(s3_dirs):
     q = multiprocessing.Queue()
